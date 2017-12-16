@@ -39,8 +39,8 @@ void Facedetect::FaceHist() {
 	const float* phranges = hranges;
 
 	cvtColor(img, hsv, COLOR_BGR2HSV);
-	inRange(hsv, Scalar(0, 30, MIN(10, 256)), Scalar(180, 256, MAX(10, 256)), mask);//
-	Mat maskroi(mask, faces[0]);
+//	inRange(hsv, Scalar(0, 30, MIN(10, 256)), Scalar(180, 256, MAX(10, 256)), mask);//滤波效果跟参数有关
+//	Mat maskroi(mask, faces[0]);
 
 	for (size_t i = 0; i < faces.size(); i++)//faces.size()始终为1？。后边的会覆盖，但是不会清空
 	{
@@ -54,8 +54,8 @@ void Facedetect::FaceHist() {
 		//imshow("roi", hsvChannels[0]);//需要归一化？
 		
 
-//		waitKey(0);
-		calcHist(&hsvChannels[0], 1, 0, maskroi, hist, 1, &hsize, &phranges);//计算直方图。只有计算直方图是一次
+//		waitKey(0);  此处掩码可为空
+		calcHist(&hsvChannels[0], 1, 0, Mat(), hist, 1, &hsize, &phranges);//计算直方图。只有计算直方图是一次
 		normalize(hist, hist, 0, 255, NORM_MINMAX);//归一化
 		cout << hist << endl;
 		//imshow("hist",hist);
@@ -70,7 +70,7 @@ void Facedetect::FaceHist() {
 		
 }
 
-void Facedetect::BackHist()
+void Facedetect::BackHist(Mat image)
 {
 	//计算的是整幅图像上的反向投影
 	Mat imgHSV;
@@ -78,18 +78,21 @@ void Facedetect::BackHist()
 	const float *phranges = histR;
 	vector<Mat> hsvChannels;
 
-	cvtColor(img,imgHSV,COLOR_BGR2HSV);
-	split(imgHSV, hsvChannels);
+	
+	cvtColor(image,imgHSV,COLOR_BGR2HSV);
+	split(imgHSV, hsvChannels);//提取H通道图像有重复操作
+	inRange(imgHSV, Scalar(0, 30, 10), Scalar(180, 256, 256), mask);//滤波也只计算过一次
 
-	calcBackProject(&hsvChannels[0], 1, 0, hist, backproj, &phranges);
+	calcBackProject(&hsvChannels[0], 1, 0, hist, backproj, &phranges);//没有始终更新img
+	backproj &= mask;
 	imshow("backproj",backproj);
 
-	backproj &= mask;//不仅是维度，还要确保大小一样。
+	//不仅是维度，还要确保大小一样。
 }
 
 void Facedetect::CAMSHIFT() {
 	//反向投影，使用mask操作下
-
+	
 	//若跟踪区域受影响扩大，则与HSV的灰度图像与操作？
 	RotatedRect trackBox = CamShift(backproj, trackWindow,TermCriteria(TermCriteria::EPS | TermCriteria::COUNT, 10, 1));
 
@@ -127,4 +130,4 @@ CascadeClassifier Facedetect::GetClassifier() {//命名空间
 
 void Facedetect::trans_img(Mat frame) {
 	img = frame;
-}
+}//函数若不可分，就不要分的太细了

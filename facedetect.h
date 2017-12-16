@@ -1,6 +1,5 @@
 #include "opencv2/opencv.hpp"
 
-
 #include <ctype.h>
 #include <iostream>
 
@@ -18,12 +17,14 @@ public:
 	vector<Rect> GetRect();
 
 	void FaceHist();//计算检测得到的人脸的直方图
-	void BackHist();
+	void BackHist(Mat);
 
 	void trans_img(Mat);
 	void CAMSHIFT();
 	
 	CascadeClassifier GetClassifier();
+
+	//friend void Tracking::faceTracking(Mat& image,Facedetect&);
 private:
 	int m;//记录保存图片的个数
 	Mat hue;
@@ -35,6 +36,10 @@ private:
 	Rect trackWindow;
 	Mat img;//检测之后，用于保存检测的那张图片
 	CascadeClassifier face_cascade;//使用该类创建对象之后，可以使用该类中的对象
+
+	friend class Tracking;
 //为何作为类的成员函数的时候不能够正常使用
 };//类中属性都是设置为私有，类中的方法是设置为public
 //如果将类定义成为友元函数，可以访问友元类中的私有元素
+
+
