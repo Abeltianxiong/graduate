@@ -14,9 +14,9 @@ public:
 
 	bool detectFaces(cv::Mat& frame, CascadeClassifier&);
 	void SaveFaces(char*);//使用char类型数组的数组名即可
-	vector<Rect> GetRect();
+	vector<Point2f> GetRect_center();
+	vector<Rect> Get_faces();
 
-	void FaceHist();//计算检测得到的人脸的直方图
 	void BackHist(Mat);
 
 	void trans_img(Mat);
@@ -33,7 +33,7 @@ private:
 	Mat mask;
 	Mat hsv;
 	vector<Rect> faces;
-	Rect trackWindow;
+//	Rect trackWindow;
 	Mat img;//检测之后，用于保存检测的那张图片
 	CascadeClassifier face_cascade;//使用该类创建对象之后，可以使用该类中的对象
 

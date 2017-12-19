@@ -6,6 +6,8 @@ void Tracking::faceTracking(Mat& image)
 
 }
 
+
+//Ä¿Ç°Ö»ĞèÒª¶Ôfacetracking×öÒ»¸ö´óµÄĞŞ¸Ä¾ÍºÃ
 void Tracking::faceTracking(Mat& image, Facedetect& facedetect) {//½«¸Ãº¯Êı£¬¶¨Òå³ÉÎªfacedetectÀàÖĞµÄÓÑÔªº¯Êı
 	Mat hsv,hue,mask, histimg = Mat::zeros(200, 320, CV_8UC3), backproj;//Ê¹ÓÃº¯ÊıÖØÔØ£¬Ê¡µÄÒ»Ö±ĞŞ¸Ä , Facedetect& Facedetect
 	int hsize = 16;
@@ -24,13 +26,24 @@ void Tracking::faceTracking(Mat& image, Facedetect& facedetect) {//½«¸Ãº¯Êı£¬¶¨Ò
 		mixChannels(&hsv, 1, &hue, 1, ch, 1);//Ê¹hue±£´æHÍ¨µÀÑÕÉ«Í¼Ïñ
 
 		if (trackObject < 0)//¼ì²âµ½£¬»òÕßÊó±êÈ¦ÖĞ¸ú×ÙÄ¿±ê
-		{
+		{//¸ÃÌõ¼şÏÂÕû¸ö£¬¶¼ÊÇ¸ù¾İĞÂÔö¼ÓµÄ¸ú×ÙÄ¿±ê¼ÆËãµÄ¡£ 
+
+			for (int i=0;i<updateWindow.size();i++)
+			{
+
+			}
+
+
 			Mat roi(hue, facedetect.faces[0]);//Ñ¡Ôñµ½¸ĞĞËÈ¤ÇøÓò
 			calcHist(&roi, 1, 0, Mat(), hist, 1, &hsize, &phranges);
 			normalize(hist, hist, 0, 255, NORM_MINMAX);//¾ùºâ
 
-			//»¹ĞèÒªÉèÖÃÒ»¸ö±äÁ¿±£´æ¸ú×ÙÄ¿±êµÄ¸öÊı
-			trackWindow = facedetect.faces[0];//¸ú×Ù´°¿ÚĞèÒªÓÃÈİÆ÷±£´æ
+			
+			//»¹ÊÇ¸ù¾İÖ±·½Í¼£¬ĞŞ¸Ä¸ú×ÙÄ¿±êµÄ¸öÊı ĞÂÔö
+			for(int i=0;i<facedetect.faces.size();i++)//vectorÃ»ÓĞ¿ª±Ù¿Õ¼ä²»ÄÜ¹»Ö±½Ó¸³Öµ
+				trackWindow.push_back( facedetect.faces[i]);
+				//trackWindow[i] = facedetect.faces[i];//¸ú×Ù´°¿ÚĞèÒªÓÃÈİÆ÷±£´æ
+
 			trackObject = 1;//¸úÖ®Ç°µÄif else¼ÆËã·½Ê½ÊÇÒ»ÑùµÄ
 
 			histimg = Scalar::all(0);//Ò»ÏÂ¹¦ÄÜ»­Ö±·½Í¼
@@ -48,16 +61,48 @@ void Tracking::faceTracking(Mat& image, Facedetect& facedetect) {//½«¸Ãº¯Êı£¬¶¨Ò
 					Scalar(buf.at<Vec3b>(i)), -1, 8);
 			}
 			imshow("Histogram", histimg);//»­Ö±·½Í¼Ò²Ö»¸úĞÂ¹ıÒ»´Î
+
+
+			calcBackProject(&hue, 1, 0, hist, backproj, &phranges);
+			backproj &= mask;
+			imshow("backproj", backproj);//ÂË²¨Ö®ºóµÄÖ±·½Í¼·´ÏòÍ¶Ó° (È«Í¼)
+
+			//´Ë´¦´íÎó¡£Ó¦¸Ã½«¶à¸ö¸ú×ÙÇøÓòµÄÖ±·½Í¼¼ÆËã±£´æÔÚÈİÆ÷ÖĞ¡£¸ù¾İÖ±·½Í¼£¬À´¶ÔÓ¦¸ú×ÙÄ¿±ê¡£
+			for (int i = 0; i < facedetect.faces.size(); i++)
+			{
+				RotatedRect trackBox = CamShift(backproj, trackWindow[i], TermCriteria(TermCriteria::EPS | TermCriteria::COUNT, 10, 1));
+				ellipse(image, trackBox, Scalar(0, 0, 255), 3, LINE_AA);
+				//cout << trackBox.center.x << " " << trackBox.center.y << endl;
+				//½«ÖĞĞÄ×ø±ê±£´æµ½ÈİÆ÷ÖĞ//ĞèÒªÍê³ÉÔËËã·ûÖØÔØ£¬
+				trac_point.push_back(trackBox.center);//µÚÒ»¸ú×ÙµÄÊ±ºò£¬ÊÇÖ±½Ó²åÈëÈİÆ÷ÖĞ£¬ºóĞøÖ¡¸ú×ÙµÄÊ±ºò£¬ÊÇÌæ»»
+				cout <<"the tracking center: "<< trackBox.center << endl;
+				cout<<"the tracking nums: "<<trac_point.size() << endl;
+			}//¼ÆËãHistÒ²Ã»ÓĞÓ°Ïìµ½ºó±ßµÄ¸ú×Ù¡£
+
+
+		}
+		else {
+			calcBackProject(&hue, 1, 0, hist, backproj, &phranges);
+			backproj &= mask;
+			imshow("backproj", backproj);//ÂË²¨Ö®ºóµÄÖ±·½Í¼·´ÏòÍ¶Ó° (È«Í¼)
+
+			//³õ´Î¸ú×ÙĞèÒª¸ù¾İfaces.size()£¬ÔÙ´Î¸ú×Ù£¬trac_point
+			for (int i = 0; i < trac_point.size(); i++)
+			{
+				RotatedRect trackBox = CamShift(backproj, trackWindow[i], TermCriteria(TermCriteria::EPS | TermCriteria::COUNT, 10, 1));
+				ellipse(image, trackBox, Scalar(0, 0, 255), 3, LINE_AA);
+				//Ìæ»»trac_pointµÄ×ø±ê
+				trac_point[i] = trackBox.center;
+				
+			}
+		
 		}
 
-		calcBackProject(&hue, 1, 0, hist, backproj, &phranges);
-		backproj &= mask;
-		imshow("backproj",backproj);//ÂË²¨Ö®ºóµÄÖ±·½Í¼·´ÏòÍ¶Ó°
-		RotatedRect trackBox = CamShift(backproj, trackWindow,TermCriteria(TermCriteria::EPS | TermCriteria::COUNT, 10, 1));
-
-		ellipse(image, trackBox, Scalar(0, 0, 255), 3, LINE_AA);
-		
 	}
+}
+
+vector<Point2f> Tracking::Get_track_point() {
+	return trac_point;
 }
 
 int Tracking::Get_trackObj()
@@ -68,3 +113,12 @@ int Tracking::Get_trackObj()
 void Tracking::Set_trackObj(int flag){
 	trackObject = flag;
 }
+
+void Tracking::Set_update_point(vector<Rect> flag) {//Ê¹ÓÃÖ®Ç°£¬Çå¿ÕÒ»´Î¾ÍºÃ
+	//¸üĞÂµÄ¸ú×Ù´°¿Ú
+	vector<Rect> up_win;
+	up_win = flag;//ËùÓĞµÄ³õÊ¼Î»ÖÃ£¬¶¼»á´æÈëÈİÆ÷ÖĞ£¿
+	updateWindow = up_win;//Ö±½Ó¸³Öµ£¬»á½«Ö®Ç°µÄÈİÆ÷¸²¸Çµô
+
+
+}//Ö»ĞèÒªÅĞ¶ÏupdateWindowÊÇ·ñÎª¿Õ¾Í¿ÉÒÔÁË
