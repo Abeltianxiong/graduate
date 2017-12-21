@@ -115,12 +115,14 @@ DWORD WINAPI ThreadProc2(LPVOID plpthread)//传递近了跟踪线程
 		return -1;
 	}
 	
-	vector<Rect> update_faces;
+	
 	for (;;)
 	{
 		//将循环类的代码移动到tracking类中
 		if (p->img.data)
 		{//数据交互，这么频繁，应该讲此操作，保存到 tracking 类中，作为，初始化跟踪目标使用
+			vector<Rect> update_faces;
+
 
 			if (!detect_flag)//该检测条件应该去掉  !detect_flag
 			{
@@ -134,40 +136,48 @@ DWORD WINAPI ThreadProc2(LPVOID plpthread)//传递近了跟踪线程
 					{
 						//获得跟踪的矩形框位置保存，与中心坐标对应
 						//p->facedetect.Get_faces()[i];
-						//int j;
+						//int j;//输出第二次检测的坐标
+
 						for (int j = 0; j < p->tracking.Get_track_point().size(); j++)//初始状态，跟踪的中心坐标的容器为空
 						{//此次操作，是一个查找的功能
 							//  <30
-							if ( abs((p->facedetect).GetRect_center()[i].x - (p->tracking).Get_track_point()[j].x)<30
-								)
-							{
+							if ( abs((p->facedetect).GetRect_center()[i].x - (p->tracking).Get_track_point()[j].x)<50
+								)//后边几次应该是没有查找到的
+							{//这种查找方式，是有一定的问题的
+								cout << "find" << endl;
 								break;
 							}//查找到，则查找下一个检测点	
 
-							if (j == p->tracking.Get_track_point().size() - 1)
+							if (j == p->tracking.Get_track_point().size() - 1)//有更新
 							{//初始情况跟踪时0不会进入查找
 								up_det_point.push_back((p->facedetect).GetRect_center()[i]);
-								(p->facedetect).SaveFaces(path);//保存检测到的图片
-
-								cout << "" << p->facedetect.Get_faces()[i] << endl;
+								//(p->facedetect).SaveFaces(path);//保存检测到的图片
+								cout << "not find" << endl;
+								cout << "the second face：" << p->facedetect.Get_faces()[i] << endl;
 								update_faces.push_back(p->facedetect.Get_faces()[i]);
+
+								p->facedetect.SaveFaces(path);
 							}
 								
 						}
-						if (p->tracking.Get_track_point().size() == 0)
+						if (p->tracking.Get_track_point().size() == 0)//初始状态无跟踪点的情况
 						{
 							cout << "the face rect: " << p->facedetect.Get_faces()[i] << endl;
 							update_faces.push_back(p->facedetect.Get_faces()[i]);
+
+							p->facedetect.SaveFaces(path);
 						}
 						
 
 					}
-					//初始状态没有进入第二层循环
-					if (update_faces.size() > 0)//每一次检测之后新增的，一般一两个
+					//初始状态没有进入第二层循环。。updateface需要情况一次
+					if (update_faces.size() > 0)//将得到的更新的人脸位置，传递给类中，方便调用
 					{//保存新增的人脸，更新标志位
 						p->tracking.Set_update_point(update_faces);//直接将原来的容器替换
-						(p->tracking).Set_trackObj(-1);
+						(p->tracking).Set_trackObj(-1);//只需要变动矩形窗口，不用变动
 						cout << "hello world" << endl;
+						//保存检测到的更新的图片
+
 						//std::cout << update_faces[0] << std::endl;
 					}
 
@@ -177,12 +187,12 @@ DWORD WINAPI ThreadProc2(LPVOID plpthread)//传递近了跟踪线程
 
 				//cout << p->facedetect.GetRect_center() << endl;
 				//cout << p->facedetect.GetRect_center().size() << endl;
-
+				detect_flag = false;
 
 			}
 			imshow("p->img",p->img);
 			cv::waitKey(10);//只有waitkey之后才能够显示图片
-			Sleep(2000);
+			Sleep(1000);
 		}
 
 

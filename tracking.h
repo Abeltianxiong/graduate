@@ -1,4 +1,3 @@
-
 #ifndef FACEDETECT_H
 #define FACEDETECT_H
 #include "facedetect.h"
@@ -10,28 +9,26 @@
 #include "opencv2/opencv.hpp"
 using namespace cv;
 
-
 class Tracking {
 public:
-	Tracking() { trackObject = 0; }//构造函数
-	void faceTracking(Mat&);
-	void faceTracking(Mat&,Facedetect&);
-	int Get_trackObj();
+	Tracking() { trackObject = 0; hist_flag = 0; m = 0; }//构造函数
+
+	void faceTracking(Mat&, Facedetect&);
+
+	bool UpdateTracking(Facedetect&);//将检测到的每一帧人脸图片存入，此函数判断是否添加新的跟踪对象，或者是删除跟踪对象
+	//void SetUpdateWin();
 	void Set_trackObj(int);
-	void Set_update_point(vector<Rect>);//保存了位置就好，不需要知道是第几个
-	vector<Point2f> Get_track_point();
+
+	void SaveFaces(Mat& img ,char* con);
 
 private:
+	int m;
 	int trackObject;
-	//所有同时跟踪的法跟踪窗口
-	vector<Rect> trackWindow;//始终使用到的是第一次检测到的窗口//Rect
-	vector<Rect> updateWindow;//新增的跟踪目标
+	int hist_flag;
+	Mat hist;
 
-	//Rect trackWindow;
-	Mat hist;//直方图只计算一次，不能够反复重新定义
-	vector<Point2f> trac_point;
-
+	vector<Rect> trackWindow;
+	vector<Rect> updateWindow;//更新窗口的值通过updatetracking获得
 	friend class Facedetect;
-
 
 };
