@@ -5,7 +5,7 @@
 bool Tracking::UpdateTracking(Facedetect& facedetect) {//²»ĞèÒª²ÎÊı£¬Ã¿´Î½²¼ì²âµÃµ½µÄvector<Rect> faces ÓëtrackWindows¶Ô±ğ
 	vector<Rect> update;
 
-	if (!trackWindow.data())//³õÊ¼×´Ì¬£¬Ã»ÓĞ¸ú×ÙµãµÄÇé¿ö
+	if (trackWindow.size() == 0)//³õÊ¼×´Ì¬£¬Ã»ÓĞ¸ú×ÙµãµÄÇé¿ö  !trackWindow.data()  trackWindow.size()==0
 	{
 		for(int i=0;i<facedetect.faces.size();i++)
 			update.push_back(facedetect.faces[i]);
@@ -16,14 +16,28 @@ bool Tracking::UpdateTracking(Facedetect& facedetect) {//²»ĞèÒª²ÎÊı£¬Ã¿´Î½²¼ì²âµ
 			for (int j = 0; j < trackWindow.size(); j++)
 			{
 				if (abs(facedetect.faces[i].x - trackWindow[j].x) < 40 ||
-					abs(facedetect.faces[i].y - trackWindow[j].y)<40
-					)
+					abs(facedetect.faces[i].y - trackWindow[j].y)<40 )//Èç¹ûÓĞÒ»¶¨Æ«²î£¬¾ÀÕıtrackwindow	
 				{
-					break;
+					break;//ÊÇÍ¬Ò»¸öÈË£¬¿ÉÒÔ½«faces[i]±£´æ
 				}
 				if (j== trackWindow.size()-1)
 				{
-					update.emplace_back(facedetect.faces[i]);
+					//±£´æupdateWindowÖ®Ç°£¬ÅĞ¶ÏÒ»´Î£¬ÊÇ·ñ´æÔÚÈËÑÛ£¬È·ÈÏÊÇ·ñ±£´æ
+
+					CascadeClassifier eyes_cascade;
+					vector<Rect> eyes;
+					bool classifier_flag;
+					classifier_flag = eyes_cascade.load("F:haarcascade_ey.xml");
+					if (!classifier_flag)//¼ÓÔØÊ§°Ü·µ»Ø±êÖ¾¡£¼ÓÔØ³É¹¦ÊÇ·µ»Øtrue
+					{
+						std::cout << "load cascade error";
+						break;
+					}
+
+					eyes_cascade.detectMultiScale(facedetect.frame_gray, eyes, 1.1, 3, 0, Size(80, 80));
+
+					if(eyes.size()>0)
+						update.emplace_back(facedetect.faces[i]);
 				}
 
 			}
@@ -106,7 +120,7 @@ void Tracking::faceTracking(Mat& image, Facedetect& facedetect) {
 
 
 		}
-		//¼ÆËã·½ÏòÍ¶Ó°£¬camshift
+		//¼ÆËã·´ÏòÍ¶Ó°£¬camshift
 		calcBackProject(&hue, 1, 0, hist, backproj, &phranges);
 		backproj &= mask;
 		imshow("backproj", backproj);
@@ -116,6 +130,16 @@ void Tracking::faceTracking(Mat& image, Facedetect& facedetect) {
 			ellipse(image, trackBox, Scalar(0, 0, 255), 3, LINE_AA);//¸ú×Ù´°¿Ú²ÉÓÃµÄÒ²ÊÇÒıÓÃµÄ·½Ê½£¬trackWindows[i]Ê¼ÖÕÔÚ¸Ä±ä
 			imshow("image",image);
 			cout << "trackwindow: " << trackWindow[i] << endl;
+			cout << " " << image.cols << " " << image.rows << endl;
+
+			//µ±¸ú×ÙÇøÓòĞ¡ÓÚ±ßÔµÊ±£¬erase£¬É¾³ıÆô¶¯Ò»¸öÔªËØ¡£É¾³ıÖ®ºó£¬vec.size()¸Ä±äÁËÂğ£¿
+			//¸ú×ÙµÄÊ±ºò£¬trackWindowË³Ğò¾ÍÊÇ¸ú×ÙµÄË³Ğò
+			if (trackBox.center.x<30 || trackBox.center.y<30 )//|| 
+				//trackBox.center.x>image.rows-30 || trackBox.center.y>image.cols-30)
+			{
+				trackWindow.erase(trackWindow.begin()+i);
+			}
+
 		}
 
 	}

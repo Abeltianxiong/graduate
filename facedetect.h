@@ -13,6 +13,10 @@ public:
 	bool detectFaces(cv::Mat& frame, CascadeClassifier&);
 
 private:
+	
+	
+	Mat frame_gray;
+
 	int m;
 	vector<Rect> faces;
 

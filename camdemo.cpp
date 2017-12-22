@@ -28,7 +28,7 @@ DWORD WINAPI ThreadProc2(LPVOID plpthread) {//不适用参数传递，使用全局变量
 
 int main()
 {
-	VideoCapture cap(0);
+	VideoCapture cap(0);//0
 	Mat frame;
 
 	
@@ -53,6 +53,9 @@ int main()
 		bool flag = cap.read(frame);//读图片的速度款系到跟踪的效果？
 		if (!flag)
 			break;//不是continue
+		
+		//frame = imread("I:/image/two.jpg");
+
 		if(!detect_flag)
 			detect_flag=facedetect.detectFaces(frame, face_cascade);
 
@@ -64,12 +67,16 @@ int main()
 			{
 				tracking.Set_trackObj(-1);//需要更新跟踪窗口的信息
 				tracking.SaveFaces(frame, "I:/image/test/");
+				//不是有更新的目标就保存目标
 			}
+			//最终保存的图片应该是trackwindows中的目标
 				
 			detect_flag = false;
 		}//假设先不适用多线程，检测之后就跟踪，并且，判断是否更新跟踪
 
 		tracking.faceTracking(frame,facedetect);//无论是否更新跟踪窗口，都需要执行跟踪器
+
+		waitKey(30);
 		
 	}//trackwindows没有更新
 	

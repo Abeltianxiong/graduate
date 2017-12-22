@@ -2,7 +2,7 @@
 
 bool Facedetect::detectFaces(cv::Mat& frame, CascadeClassifier& face_cascade) 
 {
-	Mat frame_gray;//如果人脸定义到函数内部，重新定义的时候，会清空
+//	Mat frame_gray;//如果人脸定义到函数内部，重新定义的时候，会清空
 	
 
 	cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
@@ -17,7 +17,7 @@ bool Facedetect::detectFaces(cv::Mat& frame, CascadeClassifier& face_cascade)
 		cout << faces[i] << endl;
 
 	}
-	imshow("frame", frame);
+	//imshow("frame", frame);
 	waitKey(30);
 
 	if (faces.size())
